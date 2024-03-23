@@ -1,64 +1,71 @@
-let testStarted = false
-let startTime = null
-let finishTime = null
-let timer = null
-let trialCount = 0
-let successfulClicks = 0
+let testStarted = false;
+let startTime = null;
+let finishTime = null;
+let timer = null;
+let trialCount = 0;
+let successfulClicks = 0;
 const reactionTimes = [];
 
-const clickarea = document.querySelector('.clickarea')
-const message = document.querySelector('.message')
-const note = document.querySelector('.note')
+const clickarea = document.querySelector('.clickarea');
+const message = document.querySelector('.message');
+const note = document.querySelector('.note');
 
 const randomNumber = (min, max, int = false) => {
-  return (int)
-    ? Math.floor(Math.random() * (max - min + 1)) + min
-    : Math.random() * (max - min) + min
-}
+  return int ? Math.floor(Math.random() * (max - min + 1)) + min : Math.random() * (max - min) + min;
+};
 
 const updateText = (messageText, noteText) => {
-  message.textContent = messageText
-  note.textContent = noteText
-}
+  message.textContent = messageText;
+  note.textContent = noteText;
+};
 
 const handleClick = event => {
-  event.preventDefault()
-  event.stopPropagation()
+  event.preventDefault();
+  event.stopPropagation();
 
-  if (trialCount < 5) {
+  if (trialCount < 20) {
     if (!testStarted) {
-      const msUntilGreen = randomNumber(2, 4)
-      startTime = new Date()
-      finishTime = new Date(startTime.getTime() + (msUntilGreen * 1000))
+      if (trialCount === 0) {
+        updateText('Lakukan 5 kali percobaan terlebih dahulu', ''); // Teks khusus pada percobaan pertama
+      } else if (trialCount >= 1 && trialCount <= 4) {
+        updateText('Tunggu warna hijau', ''); // Teks khusus untuk percobaan 2-5
+      } else if (trialCount === 5) {
+        updateText('Mulai Test', ''); // Teks khusus pada percobaan ke-6
+      } else {
+        updateText('Tunggu warna hijau', ''); // Teks khusus untuk percobaan 7-20
+      }
+      const msUntilGreen = randomNumber(2, 4);
+      startTime = new Date();
+      finishTime = new Date(startTime.getTime() + (msUntilGreen * 1000));
 
-      clickarea.classList.add('red')
-      updateText('Tunggu lampu hijau...', '')
-      testStarted = true
+      clickarea.classList.add('red');
+      
+      testStarted = true;
 
       timer = setTimeout(() => {
-        clickarea.classList.remove('red')
-        clickarea.classList.add('green')
-        message.textContent = 'Klik!'
-      }, msUntilGreen * 1000)
+        clickarea.classList.remove('red');
+        clickarea.classList.add('green');
+        message.textContent = 'Klik!';
+      }, msUntilGreen * 1000);
     } else {
-      testStarted = false
-      trialCount++
+      testStarted = false;
+      trialCount++;
 
       if (new Date() < finishTime) {
-        clearTimeout(timer)
-        clickarea.classList.remove('red')
-        updateText('Terlalu cepat!', 'Klik untuk mencoba lagi')
+        clearTimeout(timer);
+        clickarea.classList.remove('red');
+        updateText('Terlalu cepat!', 'Klik untuk mencoba lagi');
       } else {
-        successfulClicks++
+        successfulClicks++;
         const reactionTime = new Date() - finishTime;
         reactionTimes.push(reactionTime);
 
-        clickarea.classList.remove('green')
-        updateText(`${new Date() - finishTime}ms`, `Klik untuk melanjutkan - Percobaan ${trialCount}`)
+        clickarea.classList.remove('green');
+        updateText(`${new Date() - finishTime}ms`, `Klik untuk melanjutkan - Percobaan ${trialCount}`);
       }
     }
   } else {
-    const averageReactionTime = reactionTimes.reduce((acc, time) => acc + time, 0) / reactionTimes.length;
+    const averageReactionTime = reactionTimes.slice(5).reduce((acc, time) => acc + time, 0) / (reactionTimes.length - 4);
 
     let resultText = '';
     if (averageReactionTime >= 150 && averageReactionTime <= 240) {
@@ -74,8 +81,18 @@ const handleClick = event => {
     updateText(`Rata-rata Waktu Reaksi: ${averageReactionTime.toFixed(2)}ms - ${resultText}`, 'Test selesai');
     clickarea.removeEventListener('mousedown', handleClick);
     clickarea.removeEventListener('touchstart', handleClick);
-  }
-}
 
-clickarea.addEventListener('mousedown', handleClick)
-clickarea.addEventListener('touchstart', handleClick)
+    if (resultText === 'Normal') {
+      document.getElementById('audio-normal').play();
+    } else if (resultText === 'Kelelahan Ringan') {
+      document.getElementById('audio-kelelahan-ringan').play();
+    } else if (resultText === 'Kelelahan Sedang') {
+      document.getElementById('audio-kelelahan-sedang').play();
+    } else if (resultText === 'Kelelahan Berat') {
+      document.getElementById('audio-kelelahan-berat').play();
+    }
+  }
+};
+
+clickarea.addEventListener('mousedown', handleClick);
+clickarea.addEventListener('touchstart', handleClick);
